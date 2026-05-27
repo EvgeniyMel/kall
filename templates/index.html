@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Панель управления сетевыми устройствами">
+  <title>TGIEK • Router Manager </title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/static/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon.png">
+  <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.png">
+  <style>
+    :root {
+      --bg:          #f0f4f8;
+      --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #e6eeff 100%);
+      --card-bg:     #ffffff;
+      --text:        #1a2b47;
+      --text-light:  #5a6b82;
+      --accent:      #0066cc;
+      --accent-hover:#0052a3;
+      --accent-light:#e6f2ff;
+      --accent-glow: rgba(0, 102, 204, 0.25);
+      --border:      #d5e0eb;
+      --shadow:      0 4px 20px rgba(0, 0, 0, 0.08);
+      --shadow-hover:0 12px 40px rgba(0, 102, 204, 0.2);
+      --success:     #22c55e;
+      --warning:     #f59e0b;
+      --danger:      #ef4444;
+      --radius:      14px;
+      --transition:  all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg:          #0f172a;
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --card-bg:     #1e293b;
+      --text:        #f1f5f9;
+      --text-light:  #94a3b8;
+      --accent:      #3b82f6;
+      --accent-hover:#60a5fa;
+      --accent-light:#1e3a5f;
+      --accent-glow: rgba(59, 130, 246, 0.35);
+      --border:      #334155;
+      --shadow:      0 4px 20px rgba(0, 0, 0, 0.3);
+      --shadow-hover:0 12px 40px rgba(59, 130, 246, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, "Roboto", "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      transition: var(--transition);
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: white;
+      padding: 2.8rem 1.5rem 2.2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+      animation: pulse 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .header-content {
+      position: relative; z-index: 1;
+      max-width: 700px; margin: 0 auto;
+      display: flex; flex-direction: column; align-items: center; gap: 0.9rem;
+    }
+
+    .main-logo {
+      width: 84px; height: 84px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(6px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      animation: float 3.5s ease-in-out infinite;
+      overflow: hidden;
+    }
+
+    .logo-img {
+      width: 70px; height: 70px;
+      object-fit: cover; display: block; border-radius: 50%;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(2deg); }
+    }
+
+    h1 {
+      font-size: 2.3rem; font-weight: 700; letter-spacing: -0.3px; margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .subtitle {
+      font-size: 1.1rem; opacity: 0.95; font-weight: 400;
+      max-width: 520px; line-height: 1.4;
+    }
+
+    /* ===== THEME TOGGLE ===== */
+    .theme-toggle {
+      position: fixed; top: 1.2rem; right: 1.2rem;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--card-bg); border: 2px solid var(--border);
+      color: var(--text); font-size: 1.3rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow); transition: var(--transition);
+      z-index: 100; padding: 0;
+    }
+
+    .theme-toggle:hover {
+      transform: rotate(15deg) scale(1.05);
+      border-color: var(--accent); box-shadow: var(--shadow-hover);
+    }
+
+    /* ===== SEARCH ===== */
+    .search-container {
+      max-width: 600px; margin: 1.5rem auto 0; padding: 0 1rem; position: relative;
+    }
+
+    .search-box {
+      width: 100%; padding: 0.95rem 1.2rem 0.95rem 3rem;
+      border: 2px solid var(--border); border-radius: 50px;
+      background: var(--card-bg); color: var(--text); font-size: 1rem;
+      transition: var(--transition); box-shadow: var(--shadow);
+    }
+
+    .search-box:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+
+    .search-icon {
+      position: absolute; left: 2.1rem; top: 50%;
+      transform: translateY(-50%); color: var(--text-light);
+      pointer-events: none; font-size: 1.1rem;
+    }
+
+    /* ===== CONTAINER & GRID ===== */
+    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.2rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.3rem;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem;
+      text-decoration: none;
+      color: var(--text);
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      min-height: 180px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      opacity: 0; transition: var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding-bottom: 0.8rem; border-bottom: 1px solid var(--border);
+    }
+
+    .card-icon { font-size: 2rem; line-height: 1; margin-right: 0.8rem; }
+    .card-title { font-weight: 600; font-size: 1.15rem; color: var(--accent); }
+    .card-ip {
+      font-size: 0.8rem; color: var(--text-light);
+      background: var(--accent-light); padding: 0.2rem 0.5rem;
+      border-radius: 4px; font-family: monospace;
+    }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.25rem 0.6rem; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 500; white-space: nowrap;
+    }
+    .status-online { background: rgba(34,197,94,0.15); color: var(--success); }
+    .status-offline { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .status-unknown { background: var(--border); color: var(--text-light); }
+
+    .card-body { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem; }
+    .info-row { display: flex; justify-content: space-between; gap: 0.5rem; }
+    .info-label { color: var(--text-light); }
+    .info-value {
+      font-weight: 500; word-break: break-all; text-align: right;
+      max-width: 55%;
+    }
+    .info-value.password {
+      font-family: monospace; background: var(--card-bg);
+      padding: 0.1rem 0.4rem; border-radius: 3px; border: 1px solid var(--border);
+    }
+
+    .card-note {
+      font-size: 0.85rem; color: var(--text-light); font-style: italic;
+      padding: 0.4rem 0.6rem; background: var(--accent-light);
+      border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0;
+    }
+
+    .card-actions {
+      display: flex; gap: 0.4rem; margin-top: auto; padding-top: 0.8rem;
+      border-top: 1px dashed var(--border); flex-wrap: wrap;
+    }
+
+    .action-btn {
+      flex: 1; min-width: 55px; padding: 0.45rem 0.3rem;
+      text-align: center; border-radius: 6px; font-weight: 500;
+      font-size: 0.8rem; cursor: pointer; transition: var(--transition);
+      border: none; background: var(--accent-light); color: var(--accent);
+      display: flex; align-items: center; justify-content: center; gap: 0.2rem;
+    }
+
+    .action-btn.ping:hover { background: var(--success); color: white; }
+    .action-btn.web:hover { background: var(--accent); color: white; }
+    .action-btn.ssh:hover { background: var(--warning); color: #1a2b47; }
+
+    .btn-edit { background: var(--warning); color: #1a2b47; }
+    .btn-edit:hover { background: #d97706; color: white; }
+    .btn-delete { background: var(--danger); color: white; }
+    .btn-delete:hover { background: #dc2626; }
+
+    .btn-icon { font-size: 1rem; }
+
+    /* ===== TOOLBAR ===== */
+    .toolbar {
+      display: flex; gap: 0.8rem; margin: 1.5rem 0; flex-wrap: wrap;
+      justify-content: center; align-items: center;
+    }
+
+    .btn {
+      padding: 0.65rem 1.3rem; border: none; border-radius: 50px;
+      cursor: pointer; font-weight: 500; transition: var(--transition);
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.95rem; box-shadow: var(--shadow);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px); box-shadow: var(--shadow-hover);
+    }
+
+    .btn-outline {
+      background: var(--card-bg); color: var(--text);
+      border: 2px solid var(--border);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* ===== SORT SELECT ===== */
+    .sort-select {
+      padding: 0.6rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 50px;
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      min-width: 180px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a6b82' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 36px;
+    }
+
+    .sort-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+
+    .sort-select option {
+      background: var(--card-bg);
+      color: var(--text);
+    }
+
+    /* ===== MODAL ===== */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.6);
+      z-index: 1000; align-items: center; justify-content: center;
+      padding: 1rem; backdrop-filter: blur(4px);
+    }
+    .modal.active { display: flex; }
+
+    .modal-content {
+      background: var(--card-bg); border-radius: var(--radius);
+      width: 100%; max-width: 580px; max-height: 92vh;
+      overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      border: 1px solid var(--border); animation: modalIn 0.3s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-header {
+      padding: 1.3rem 1.6rem; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: white; border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .modal-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+    .modal-close {
+      background: none; border: none; font-size: 1.8rem;
+      cursor: pointer; color: white; opacity: 0.9; transition: 0.2s;
+    }
+    .modal-close:hover { opacity: 1; transform: scale(1.1); }
+
+    .modal-body { padding: 1.4rem 1.6rem; }
+
+    .form-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    .form-group { margin-bottom: 0.3rem; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      display: block; margin-bottom: 0.35rem; font-weight: 500;
+      font-size: 0.9rem; color: var(--text);
+    }
+
+    input, textarea {
+      width: 100%; padding: 0.6rem 0.85rem;
+      border: 2px solid var(--border); border-radius: 8px;
+      font-size: 0.95rem; transition: var(--transition);
+      background: var(--card-bg); color: var(--text);
+    }
+    input:focus, textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+    input::placeholder, textarea::placeholder { color: var(--text-light); }
+    textarea { min-height: 65px; resize: vertical; }
+
+    .modal-footer {
+      padding: 1rem 1.6rem; border-top: 1px solid var(--border);
+      display: flex; gap: 0.8rem; justify-content: flex-end;
+      background: var(--card-bg); border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center; padding: 3.5rem 1.5rem;
+      color: var(--text-light); background: var(--card-bg);
+      border-radius: var(--radius); border: 2px dashed var(--border);
+      animation: fadeInUp 0.4s ease;
+    }
+    .empty-state svg {
+      width: 72px; height: 72px; margin-bottom: 1rem;
+      opacity: 0.6; stroke: var(--text-light);
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center; padding: 2.2rem 1rem 3rem;
+      color: var(--text-light); font-size: 0.9rem;
+      border-top: 1px solid var(--border); margin-top: 3.5rem;
+      background: var(--card-bg);
+    }
+    footer p { margin: 0.3rem 0; }
+    .author { font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem; }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .grid .card {
+      animation: fadeInUp 0.4s ease forwards;
+      animation-delay: calc(var(--i, 0) * 0.05s);
+      opacity: 0;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      header { padding: 2.4rem 1rem 1.8rem; }
+      .main-logo { width: 72px; height: 72px; font-size: 2.2rem; }
+      h1 { font-size: 1.9rem; }
+      .subtitle { font-size: 1rem; }
+      .grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      .card { min-height: 170px; padding: 1.2rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .toolbar { flex-direction: column; align-items: center; }
+      .btn, .sort-select { width: 100%; max-width: 280px; justify-content: center; }
+    }
+
+    @media (max-width: 480px) {
+      .main-logo { width: 64px; height: 64px; font-size: 1.9rem; }
+      h1 { font-size: 1.65rem; }
+      .subtitle { font-size: 0.95rem; }
+      .grid { grid-template-columns: 1fr; }
+      .card-actions { flex-direction: column; }
+      .action-btn { width: 100%; }
+      .theme-toggle { width: 40px; height: 40px; font-size: 1.1rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+      .main-logo { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Переключатель темы -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему" title="Светлая / Тёмная тема">🌓</button>
+
+  <header>
+    <div class="header-content">
+      <div class="main-logo"> <img src="/static/logo.jpg" alt="Router Manager" class="logo-img" onerror="this.parentElement.innerHTML='📡'"> </div>
+      <h1>TGIEK.NET</h1>
+      <div class="subtitle">Панель управления сетевыми устройствами</div>
+    </div>
+  </header>
+
+  <!-- Поиск -->
+  <div class="search-container">
+    <span class="search-icon">🔍</span>
+    <input type="search" class="search-box" id="searchInput" placeholder="Поиск роутеров по названию, IP, локации..." aria-label="Поиск роутеров">
+  </div>
+
+  <div class="container">
+
+    <!-- Панель инструментов -->
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="openModal()">➕ Добавить роутер</button>
+      <button class="btn btn-outline" onclick="loadRouters()">🔄 Обновить</button>
+
+      <!-- 🔽 Сортировка -->
+      <select class="sort-select" id="sortSelect" aria-label="Сортировка">
+        <option value="status_desc">🟢 Сначала онлайн</option>
+        <option value="status_asc">🔴 Сначала офлайн</option>
+        <option value="name_asc">🔤 Название (А-Я)</option>
+        <option value="name_desc">🔤 Название (Я-А)</option>
+        <option value="ip_asc">🌐 IP (по возрастанию)</option>
+        <option value="ip_desc">🌐 IP (по убыванию)</option>
+        <option value="location_asc">📍 Локация (А-Я)</option>
+        <option value="location_desc">📍 Локация (Я-А)</option>
+      </select>
+    </div>
+
+    <div class="grid" id="routersGrid">
+      <!-- Карточки роутеров генерируются через JS -->
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 17h6m-6-4h6m-6-4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+      </svg>
+      <p>Нет добавленных роутеров</p>
+      <button class="btn btn-primary" onclick="openModal()" style="margin-top:1rem">Добавить первый</button>
+    </div>
+
+  </div>
+
+  <!-- Modal: Добавить/Редактировать -->
+  <div id="routerModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">➕ Добавить роутер</h3>
+        <button class="modal-close" onclick="closeModal()" aria-label="Закрыть">&times;</button>
+      </div>
+      <form id="routerForm" onsubmit="saveRouter(event)">
+        <input type="hidden" id="routerId">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="name">Название *</label>
+              <input type="text" id="name" required placeholder="Office-Main">
+            </div>
+            <div class="form-group">
+              <label for="ip_address">IP адрес *</label>
+              <input type="text" id="ip_address" required placeholder="192.168.1.1">
+            </div>
+            <div class="form-group">
+              <label for="admin_login">Логин админки *</label>
+              <input type="text" id="admin_login" required placeholder="admin">
+            </div>
+            <div class="form-group">
+              <label for="admin_password">Пароль админки *</label>
+              <input type="text" id="admin_password" required placeholder="••••••••">
+            </div>
+            <div class="form-group">
+              <label for="wifi_password">Пароль Wi-Fi *</label>
+              <input type="text" id="wifi_password" required placeholder="MySecurePass123">
+            </div>
+            <div class="form-group">
+              <label for="location">Местонахождение *</label>
+              <input type="text" id="location" required placeholder="Серверная, шкаф А3">
+            </div>
+            <div class="form-group">
+              <label for="web_port">Web порт</label>
+              <input type="number" id="web_port" value="80" min="1" max="65535">
+            </div>
+            <div class="form-group">
+              <label for="ssh_port">SSH порт</label>
+              <input type="number" id="ssh_port" value="22" min="1" max="65535">
+            </div>
+            <div class="form-group full">
+              <label for="note">Примечание</label>
+              <textarea id="note" placeholder="Дополнительная информация..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">Отмена</button>
+          <button type="submit" class="btn btn-primary">💾 Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <p>🔐 Router Manager • Доступ только из внутренней сети</p>
+    <p>2026 © TGIEK.NET</p>
+    <p class="author">System administrator</p>
+  </footer>
+
+  <script>
+    // ===== Глобальные =====
+    let routers = [];
+    let pingStatus = {}; // Хранилище статусов пинга: { id: true/false }
+
+    // ===== 🌓 Тёмная тема =====
+    const themeToggle = document.getElementById('themeToggle');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function setTheme(isDark) {
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      localStorage.setItem('routerTheme', isDark ? 'dark' : 'light');
+      themeToggle.textContent = isDark ? '☀️' : '🌙';
+    }
+
+    const savedTheme = localStorage.getItem('routerTheme');
+    if (savedTheme) {
+      setTheme(savedTheme === 'dark');
+    } else {
+      setTheme(prefersDark.matches);
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      setTheme(!isDark);
+    });
+
+    prefersDark.addEventListener('change', (e) => {
+      if (!localStorage.getItem('routerTheme')) setTheme(e.matches);
+    });
+
+    // ===== 🔍 Поиск + 🔽 Сортировка =====
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+
+    // Загрузка сохранённой сортировки
+    const savedSort = localStorage.getItem('routerSort');
+    if (savedSort) sortSelect.value = savedSort;
+
+    function applyFilters() {
+      const query = searchInput.value.toLowerCase().trim();
+      const sortBy = sortSelect.value;
+      localStorage.setItem('routerSort', sortBy);
+
+      // Фильтрация по поиску
+      let filtered = routers.filter(r => {
+        const text = `${r.name} ${r.ip_address} ${r.location} ${r.note || ''}`.toLowerCase();
+        return text.includes(query);
+      });
+
+      // Сортировка
+      filtered.sort((a, b) => {
+        const statusA = pingStatus[a.id] ?? false;
+        const statusB = pingStatus[b.id] ?? false;
+
+        switch(sortBy) {
+          case 'status_desc': // Онлайн сверху
+            if (statusA === statusB) return a.name.localeCompare(b.name, 'ru');
+            return statusA ? -1 : 1;
+          case 'status_asc': // Офлайн сверху
+            if (statusA === statusB) return a.name.localeCompare(b.name, 'ru');
+            return statusA ? 1 : -1;
+          case 'name_asc':
+            return a.name.localeCompare(b.name, 'ru');
+          case 'name_desc':
+            return b.name.localeCompare(a.name, 'ru');
+          case 'ip_asc':
+            return compareIP(a.ip_address, b.ip_address);
+          case 'ip_desc':
+            return compareIP(b.ip_address, a.ip_address);
+          case 'location_asc':
+            return a.location.localeCompare(b.location, 'ru');
+          case 'location_desc':
+            return b.location.localeCompare(a.location, 'ru');
+          case 'newest':
+            return (b.created_at || '').localeCompare(a.created_at || '');
+          case 'oldest':
+            return (a.created_at || '').localeCompare(b.created_at || '');
+          default:
+            return 0;
+        }
+      });
+
+      renderRouters(filtered);
+    }
+
+    // Сравнение IP-адресов как чисел
+    function compareIP(ip1, ip2) {
+      const parts1 = ip1.split('.').map(Number);
+      const parts2 = ip2.split('.').map(Number);
+      for (let i = 0; i < 4; i++) {
+        if (parts1[i] !== parts2[i]) return parts1[i] - parts2[i];
+      }
+      return 0;
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    sortSelect.addEventListener('change', applyFilters);
+
+    // ===== Инициализация =====
+    document.addEventListener('DOMContentLoaded', () => {
+      loadRouters();
+
+      document.getElementById('routerModal').addEventListener('click', (e) => {
+        if (e.target.id === 'routerModal') closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+        if (e.key === '/' && document.activeElement !== searchInput) {
+          e.preventDefault(); searchInput.focus();
+        }
+      });
+    });
+
+    // ===== Загрузка роутеров =====
+    async function loadRouters() {
+      try {
+        const res = await fetch('/api/routers');
+        routers = await res.json();
+        applyFilters(); // Применяем поиск и сортировку сразу
+      } catch (err) {
+        console.error('Ошибка загрузки:', err);
+        alert('⚠️ Не удалось загрузить список роутеров');
+      }
+    }
+
+    // ===== Отрисовка карточек =====
+    function renderRouters(list = routers) {
+      const grid = document.getElementById('routersGrid');
+      const empty = document.getElementById('emptyState');
+
+      if (list.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      grid.innerHTML = list.map((r, i) => {
+        const isOnline = pingStatus[r.id];
+        const statusClass = isOnline === undefined ? 'status-unknown' : (isOnline ? 'status-online' : 'status-offline');
+        const statusIcon = isOnline === undefined ? '● ?' : (isOnline ? '● ✓' : '● ✗');
+
+        return `
+        <div class="card" data-id="${r.id}" style="--i:${i}">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:0.6rem">
+              <span class="card-icon">📶</span>
+              <div>
+                <div class="card-title">${escapeHtml(r.name)}</div>
+                <span class="card-ip">${escapeHtml(r.ip_address)}</span>
+              </div>
+            </div>
+            <span class="status-badge ${statusClass}" id="status-${r.id}">${statusIcon}</span>
+          </div>
+
+          <div class="card-body">
+            <div class="info-row">
+              <span class="info-label">👤 Логин:</span>
+              <span class="info-value">${escapeHtml(r.admin_login)}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">🔐 Админ:</span>
+              <span class="info-value password">••••••••</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">📡 Wi‑Fi:</span>
+              <span class="info-value password">••••••••</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">📍 Локация:</span>
+              <span class="info-value">${escapeHtml(r.location)}</span>
+            </div>
+            ${r.note ? `<div class="card-note">📝 ${escapeHtml(r.note)}</div>` : ''}
+          </div>
+
+          <div class="card-actions">
+            <button class="action-btn ping" onclick="pingRouter(${r.id})" title="Проверить доступность">
+              <span class="btn-icon">🏓</span> Пинг
+            </button>
+            <a href="/router/${r.id}/web" target="_blank" class="action-btn web" title="Открыть веб-интерфейс">
+              <span class="btn-icon">🌐</span> Web
+            </a>
+            <button class="action-btn ssh" onclick="copySshCommand(${r.id}, this)" title="SSH команда">
+              <span class="btn-icon">🔐</span> SSH
+            </button>
+            <button class="action-btn btn-edit" onclick="editRouter(${r.id})" title="Редактировать">✏️</button>
+            <button class="action-btn btn-delete" onclick="deleteRouter(${r.id})" title="Удалить">🗑️</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Авто-пинг при первой загрузке
+      if (!window._pingInitialized) {
+        list.forEach(r => pingRouter(r.id, false));
+        window._pingInitialized = true;
+      }
+    }
+
+    // ===== 🏓 Пинг роутера =====
+    async function pingRouter(id, showStatus = true) {
+      const badge = document.getElementById(`status-${id}`);
+      if (showStatus && badge) {
+        badge.className = 'status-badge status-unknown';
+        badge.innerHTML = '● ...';
+      }
+
+      try {
+        const res = await fetch(`/api/routers/${id}/ping`);
+        const data = await res.json();
+
+        pingStatus[id] = data.alive; // Сохраняем статус
+
+        if (badge) {
+          if (data.alive) {
+            badge.className = 'status-badge status-online';
+            badge.innerHTML = '● ✓';
+          } else {
+            badge.className = 'status-badge status-offline';
+            badge.innerHTML = '● ✗';
+          }
+        }
+
+        // Если сортировка по статусу — перерисовываем
+        if (sortSelect.value.startsWith('status_')) {
+          applyFilters();
+        }
+
+        return data.alive;
+      } catch (err) {
+        console.error('Ping error:', err);
+        pingStatus[id] = false;
+        if (badge) {
+          badge.className = 'status-badge status-offline';
+          badge.innerHTML = '● !';
+        }
+        return false;
+      }
+    }
+
+    // ===== 🔐 SSH команда =====
+    async function copySshCommand(id, btnElement) {
+      try {
+        const res = await fetch(`/api/routers/${id}/ssh`);
+        if (!res.ok) {
+          const err = await res.text();
+          alert(`Ошибка сервера (${res.status}):\n${err.substring(0,150)}`);
+          return;
+        }
+        const data = await res.json();
+        await navigator.clipboard.writeText(data.command);
+
+        const orig = btnElement.innerHTML;
+        btnElement.innerHTML = '<span class="btn-icon">✅</span> OK';
+        btnElement.style.background = 'var(--success)';
+        btnElement.style.color = 'white';
+
+        setTimeout(() => {
+          btnElement.innerHTML = orig;
+          btnElement.style.background = '';
+          btnElement.style.color = '';
+        }, 1400);
+
+      } catch (e) {
+        console.error(e);
+        alert('❌ Не удалось скопировать SSH команду');
+      }
+    }
+
+    // ===== Модальное окно =====
+    function openModal(router = null) {
+      const modal = document.getElementById('routerModal');
+      const title = document.getElementById('modalTitle');
+
+      if (router) {
+        title.textContent = '✏️ Редактировать роутер';
+        document.getElementById('routerId').value = router.id;
+        document.getElementById('name').value = router.name;
+        document.getElementById('ip_address').value = router.ip_address;
+        document.getElementById('admin_login').value = router.admin_login;
+        document.getElementById('admin_password').value = router.admin_password;
+        document.getElementById('wifi_password').value = router.wifi_password;
+        document.getElementById('location').value = router.location;
+        document.getElementById('note').value = router.note || '';
+        document.getElementById('web_port').value = router.web_port || 80;
+        document.getElementById('ssh_port').value = router.ssh_port || 22;
+      } else {
+        title.textContent = '➕ Добавить роутер';
+        document.getElementById('routerForm').reset();
+        document.getElementById('routerId').value = '';
+        document.getElementById('web_port').value = 80;
+        document.getElementById('ssh_port').value = 22;
+      }
+
+      modal.classList.add('active');
+      document.getElementById('name').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('routerModal').classList.remove('active');
+    }
+
+    // ===== Сохранение =====
+    async function saveRouter(e) {
+      e.preventDefault();
+      const id = document.getElementById('routerId').value;
+      const data = {
+        name: document.getElementById('name').value.trim(),
+        ip_address: document.getElementById('ip_address').value.trim(),
+        admin_login: document.getElementById('admin_login').value.trim(),
+        admin_password: document.getElementById('admin_password').value,
+        wifi_password: document.getElementById('wifi_password').value,
+        location: document.getElementById('location').value.trim(),
+        note: document.getElementById('note').value.trim(),
+        web_port: parseInt(document.getElementById('web_port').value) || 80,
+        ssh_port: parseInt(document.getElementById('ssh_port').value) || 22
+      };
+
+      try {
+        const url = id ? `/api/routers/${id}` : '/api/routers';
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Ошибка сохранения');
+        closeModal();
+        loadRouters();
+      } catch (err) {
+        console.error(err);
+        alert('❌ Не удалось сохранить роутер');
+      }
+    }
+
+    // ===== Редактирование / Удаление =====
+    function editRouter(id) {
+      const r = routers.find(x => x.id === id);
+      if (r) openModal(r);
+    }
+
+    async function deleteRouter(id) {
+      if (!confirm('🗑️ Удалить этот роутер?\nЭто действие нельзя отменить.')) return;
+      try {
+        const res = await fetch(`/api/routers/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Ошибка удаления');
+        loadRouters();
+      } catch (err) {
+        console.error(err);
+        alert('❌ Не удалось удалить роутер');
+      }
+    }
+
+    // ===== Утилита =====
+    function escapeHtml(text) {
+      const d = document.createElement('div');
+      d.textContent = text;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>
